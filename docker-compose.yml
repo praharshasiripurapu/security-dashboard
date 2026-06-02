@@ -1,0 +1,79 @@
+services:
+
+  # PostgreSQL Database
+  db:
+    image: postgres:16-alpine
+    container_name: securitydash_db
+    environment:
+      POSTGRES_USER: secuser
+      POSTGRES_PASSWORD: secpass
+      POSTGRES_DB: securitydash
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U secuser -d securitydash"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # FastAPI application
+  securitydash:
+    build: .
+    container_name: securitydash_api
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://secuser:secpass@db:5432/securitydash
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # Prometheus
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: securitydash_prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus:/etc/prometheus:ro
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/etc/prometheus/console_libraries"
+      - "--web.console.templates=/etc/prometheus/consoles"
+      - "--web.enable-lifecycle"
+    restart: unless-stopped
+    depends_on:
+      - securitydash
+
+  # Grafana
+  grafana:
+    image: grafana/grafana:latest
+    container_name: securitydash_grafana
+    ports:
+      - "3001:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=securitydash
+      - GF_USERS_ALLOW_SIGN_UP=false
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+
+volumes:
+  postgres_data:
+  prometheus_data:
+  grafana_data:

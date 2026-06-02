@@ -1,0 +1,79 @@
+# alert_rules.yml
+# Prometheus alerting rules for SecurityDash
+
+groups:
+  - name: security_alerts
+    rules:
+
+      # Alert when failed logins spike
+      - alert: HighFailedLoginRate
+        expr: rate(failed_login_attempts_total[5m]) > 0.5
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High failed login rate detected"
+          description: "Failed login rate is {{ $value | humanize }} per second over the last 5 minutes."
+
+      # Alert when a suspicious IP threshold is crossed
+      - alert: SuspiciousIPsDetected
+        expr: suspicious_ip_count_total > 0
+        for: 0m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Suspicious IPs detected"
+          description: "{{ $value }} IP(s) have exceeded the failed login threshold."
+
+      # Alert when API response time p95 is slow
+      - alert: SlowAPIResponse
+        expr: histogram_quantile(0.95, rate(api_response_time_seconds_bucket[5m])) > 1.0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "API response time p95 is high"
+          description: "95th percentile response time is {{ $value | humanizeDuration }}."
+
+      # Alert when CPU usage is high
+      - alert: HighCPUUsage
+        expr: system_cpu_usage_percent > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage"
+          description: "CPU usage is {{ $value }}% for more than 5 minutes."
+
+      # Alert when memory usage is high
+      - alert: HighMemoryUsage
+        expr: system_memory_usage_percent > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage is {{ $value }}%."
+
+      # Alert when ZAP finds HIGH severity vulnerabilities
+      - alert: HighSeverityVulnerabilities
+        expr: zap_vulnerabilities_high_total > 0
+        for: 0m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High severity vulnerabilities detected by ZAP"
+          description: "ZAP scan found {{ $value }} HIGH severity vulnerability/vulnerabilities."
+
+  - name: availability_alerts
+    rules:
+
+      # Alert if the app goes down (no metrics being scraped)
+      - alert: SecurityDashDown
+        expr: up{job="securitydash"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "SecurityDash API is down"
+          description: "The FastAPI app has not responded to Prometheus scrapes for 1 minute."
