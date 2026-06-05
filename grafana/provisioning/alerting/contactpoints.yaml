@@ -38,21 +38,20 @@ contactPoints:
       #   disableResolveMessage: false
 
       # ── Email ──────────────────────────────────────────────
-      # Uncomment and configure SMTP settings in .env to enable
-      # - uid: email-receiver
-      #   type: email
-      #   settings:
-      #     addresses: ${ALERT_EMAIL_TO}
-      #     subject: "[SecurityDash] {{ .CommonLabels.alertname }} - {{ .CommonLabels.severity }}"
-      #     message: |
-      #       SecurityDash has triggered an alert.
-      #
-      #       Alert: {{ .CommonLabels.alertname }}
-      #       Severity: {{ .CommonLabels.severity }}
-      #       Summary: {{ range .Alerts }}{{ .Annotations.summary }}{{ end }}
-      #
-      #       Check your Grafana dashboard for details.
-      #   disableResolveMessage: false
+      - uid: email-receiver
+        type: email
+        settings:
+          addresses: ${ALERT_EMAIL_TO}
+          subject: "[SecurityDash] {{ .CommonLabels.alertname }} - {{ .CommonLabels.severity }}"
+          message: |
+            SecurityDash has triggered an alert.
+
+            Alert: {{ .CommonLabels.alertname }}
+            Severity: {{ .CommonLabels.severity }}
+            Summary: {{ range .Alerts }}{{ .Annotations.summary }}{{ end }}
+
+            Check your Grafana dashboard for details.
+        disableResolveMessage: false
 
       # ── Default (always active) ────────────────────────────
       # Logs alerts to Grafana UI even without Slack/email configured
