@@ -1,0 +1,28 @@
+# ─────────────────────────────────────────────────────────────
+# Grafana Notification Policies
+# Controls which alerts go to which contact point
+# ─────────────────────────────────────────────────────────────
+
+apiVersion: 1
+
+policies:
+  - orgId: 1
+    receiver: SecurityDash Alerts    # default contact point for all alerts
+    group_by: ["alertname", "severity"]
+    group_wait: 30s                  # wait 30s before sending first notification
+    group_interval: 5m               # wait 5m before sending updated notifications
+    repeat_interval: 12h             # re-notify every 12h if alert is still firing
+
+    routes:
+      # Critical alerts — notify immediately, repeat every hour
+      - receiver: SecurityDash Alerts
+        matchers:
+          - severity = critical
+        group_wait: 0s
+        repeat_interval: 1h
+
+      # Warning alerts — standard grouping
+      - receiver: SecurityDash Alerts
+        matchers:
+          - severity = warning
+        repeat_interval: 6h

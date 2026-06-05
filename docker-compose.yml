@@ -5,16 +5,16 @@ services:
     image: postgres:16-alpine
     container_name: securitydash_db
     environment:
-      POSTGRES_USER: secuser
-      POSTGRES_PASSWORD: secpass
-      POSTGRES_DB: securitydash
+      POSTGRES_USER:     ${POSTGRES_USER:-secuser}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-secpass}
+      POSTGRES_DB:       ${POSTGRES_DB:-securitydash}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     restart: unless-stopped
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U secuser -d securitydash"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-secuser} -d ${POSTGRES_DB:-securitydash}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -26,7 +26,8 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql://secuser:secpass@db:5432/securitydash
+      - DATABASE_URL=${DATABASE_URL:-postgresql://secuser:secpass@db:5432/securitydash}
+      - API_KEY=${API_KEY:-changeme-set-a-real-key-in-env}
     restart: unless-stopped
     depends_on:
       db:
@@ -65,10 +66,18 @@ services:
     volumes:
       - grafana_data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/provisioning/alerting:/etc/grafana/provisioning/alerting:ro
     environment:
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=securitydash
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-securitydash}
       - GF_USERS_ALLOW_SIGN_UP=false
+      # SMTP for email alerts (set in .env to enable)
+      - GF_SMTP_ENABLED=${SMTP_ENABLED:-false}
+      - GF_SMTP_HOST=${SMTP_HOST:-smtp.gmail.com:587}
+      - GF_SMTP_USER=${SMTP_USER:-}
+      - GF_SMTP_PASSWORD=${SMTP_PASSWORD:-}
+      - GF_SMTP_FROM_ADDRESS=${ALERT_EMAIL_FROM:-grafana@localhost}
+      - GF_SMTP_FROM_NAME=SecurityDash Alerts
     restart: unless-stopped
     depends_on:
       - prometheus

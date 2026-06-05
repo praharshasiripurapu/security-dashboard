@@ -1,0 +1,64 @@
+# ─────────────────────────────────────────────────────────────
+# Grafana Alert Contact Points — Provisioned automatically
+#
+# HOW TO USE:
+#   Set these environment variables in your .env file:
+#     SLACK_WEBHOOK_URL=https://hooks.slack.com/services/XXX/YYY/ZZZ
+#     ALERT_EMAIL_TO=your@email.com
+#     ALERT_EMAIL_FROM=grafana@yourdomain.com
+#     SMTP_HOST=smtp.gmail.com:587
+#     SMTP_USER=your@gmail.com
+#     SMTP_PASSWORD=your-app-password
+#
+#   Then restart Grafana:
+#     docker-compose restart grafana
+# ─────────────────────────────────────────────────────────────
+
+apiVersion: 1
+
+contactPoints:
+  - orgId: 1
+    name: SecurityDash Alerts
+    receivers:
+
+      # ── Slack ──────────────────────────────────────────────
+      # Uncomment and set SLACK_WEBHOOK_URL in .env to enable
+      # - uid: slack-receiver
+      #   type: slack
+      #   settings:
+      #     url: ${SLACK_WEBHOOK_URL}
+      #     title: |
+      #       🚨 SecurityDash Alert: {{ .CommonLabels.alertname }}
+      #     text: |
+      #       *Severity:* {{ .CommonLabels.severity }}
+      #       *Summary:* {{ range .Alerts }}{{ .Annotations.summary }}{{ end }}
+      #       *Time:* {{ .CommonAnnotations.time }}
+      #     username: SecurityDash Bot
+      #     icon_emoji: ":shield:"
+      #   disableResolveMessage: false
+
+      # ── Email ──────────────────────────────────────────────
+      # Uncomment and configure SMTP settings in .env to enable
+      # - uid: email-receiver
+      #   type: email
+      #   settings:
+      #     addresses: ${ALERT_EMAIL_TO}
+      #     subject: "[SecurityDash] {{ .CommonLabels.alertname }} - {{ .CommonLabels.severity }}"
+      #     message: |
+      #       SecurityDash has triggered an alert.
+      #
+      #       Alert: {{ .CommonLabels.alertname }}
+      #       Severity: {{ .CommonLabels.severity }}
+      #       Summary: {{ range .Alerts }}{{ .Annotations.summary }}{{ end }}
+      #
+      #       Check your Grafana dashboard for details.
+      #   disableResolveMessage: false
+
+      # ── Default (always active) ────────────────────────────
+      # Logs alerts to Grafana UI even without Slack/email configured
+      - uid: default-receiver
+        type: webhook
+        settings:
+          url: http://securitydash:8000/internal/grafana-alert
+          httpMethod: POST
+        disableResolveMessage: false

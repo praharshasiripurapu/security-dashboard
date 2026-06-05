@@ -1,3 +1,35 @@
-*.pem
+# ── Secrets — NEVER commit ────────────────
 .env
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+id_rsa
+id_ed25519
+*-key.pem
+sec-dash-key.pem
+
+# Python
 __pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# Docker volumes
+postgres_data/
+grafana_data/
+prometheus_data/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
