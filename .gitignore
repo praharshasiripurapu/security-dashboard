@@ -1,5 +1,6 @@
 # ── Secrets — NEVER commit ────────────────
 .env
+.env.*
 *.pem
 *.key
 *.p12
